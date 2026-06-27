@@ -12,10 +12,17 @@ on:
     branches: [ main, master, dev ]
     paths:
       - 'apps/**'
-      - 'eslint.config.js'
+      - 'eslint.config.mjs'
       - 'package.json'
       - '.github/workflows/lint.yml'
     types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
+    paths:
+      - 'apps/**'
+      - 'eslint.config.mjs'
+      - 'package.json'
+      - '.github/workflows/lint.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
