@@ -431,7 +431,7 @@ jobs:
   badges:
     name: Update Test Badges
     needs: [setup, test]
-    if: always()
+    if: ${{ always() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
