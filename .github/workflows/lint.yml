@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   actions: read
 
 jobs:
@@ -41,16 +41,18 @@ jobs:
       frameworks: ${{ steps.matrix.outputs.frameworks }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
         
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '18'
           cache: 'npm'
           
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.9'
           cache: 'pip'
@@ -64,9 +66,11 @@ jobs:
         
       - name: Determine frameworks to lint
         id: matrix
+        env:
+          FRAMEWORKS_INPUT: ${{ github.event.inputs.frameworks }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.event.inputs.frameworks }}" != "all" ]; then
-            frameworks="${{ github.event.inputs.frameworks }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "$FRAMEWORKS_INPUT" != "all" ]; then
+            frameworks="$FRAMEWORKS_INPUT"
           else
             # Get framework list from Python config
             frameworks=$(python scripts/get_frameworks.py)
@@ -87,10 +91,12 @@ jobs:
         framework: ${{ fromJSON(needs.setup.outputs.frameworks) }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
         
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -99,17 +105,21 @@ jobs:
         run: npm ci
         
       - name: Run ESLint for ${{ matrix.framework }}
-        run: npm run lint:${{ matrix.framework }}
-        
+        env:
+          FRAMEWORK: ${{ matrix.framework }}
+        run: npm run "lint:$FRAMEWORK"
+
       - name: Generate lint report for ${{ matrix.framework }}
         if: always()
+        env:
+          FRAMEWORK: ${{ matrix.framework }}
         run: |
           mkdir -p lint-reports
-          npm run lint:${{ matrix.framework }} -- --format=json --output-file=lint-reports/${{ matrix.framework }}-lint-report.json || true
+          npm run "lint:$FRAMEWORK" -- --format=json --output-file="lint-reports/${FRAMEWORK}-lint-report.json" || true
           
       - name: Upload lint report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: lint-report-${{ matrix.framework }}
           path: lint-reports/${{ matrix.framework }}-lint-report.json
@@ -117,9 +127,11 @@ jobs:
           
       - name: Generate lint badge
         if: always()
+        env:
+          FRAMEWORK: ${{ matrix.framework }}
         run: |
           # Determine badge status and color
-          report_file="lint-reports/${{ matrix.framework }}-lint-report.json"
+          report_file="lint-reports/${FRAMEWORK}-lint-report.json"
           if [ -f "$report_file" ]; then
             error_count=$(jq '[.[].errorCount] | add // 0' "$report_file" 2>/dev/null || echo "0")
             warning_count=$(jq '[.[].warningCount] | add // 0' "$report_file" 2>/dev/null || echo "0")
@@ -145,11 +157,11 @@ jobs:
           
           # Generate badge
           badge_url="https://img.shields.io/badge/Lint-${status}-${color}?logo=eslint&logoColor=fff&labelColor=${label_color}"
-          curl -o "lint-${{ matrix.framework }}.svg" "$badge_url"
+          curl -o "lint-${FRAMEWORK}.svg" "$badge_url"
           
       - name: Upload badge
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: badge-lint-${{ matrix.framework }}
           path: lint-${{ matrix.framework }}.svg
@@ -162,10 +174,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
         
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '18'
           cache: 'npm'
@@ -174,15 +188,17 @@ jobs:
         run: npm ci
         
       - name: Download all lint reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: lint-reports
           merge-multiple: true
           
       - name: Generate lint summary
+        env:
+          FRAMEWORKS_JSON: ${{ needs.setup.outputs.frameworks }}
         run: |
           # Get the frameworks that were actually tested
-          frameworks=$(echo '${{ needs.setup.outputs.frameworks }}' | jq -r '.[]' | tr '\n' ' ')
+          frameworks=$(echo "$FRAMEWORKS_JSON" | jq -r '.[]' | tr '\n' ' ')
           
           total_apps=0
           passed_apps=0
@@ -269,25 +285,32 @@ jobs:
     if: ${{ always() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     continue-on-error: true
+    permissions:
+      contents: write
     steps:
       - name: Checkout with bot token
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           token: ${{ secrets.BOT_TOKEN }}
           fetch-depth: 0
-          
+          persist-credentials: false
+
       - name: Download all badges
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: badge-lint-*
           path: badges
           merge-multiple: true
-          
+
       - name: Commit badges
+        env:
+          TOKEN: ${{ secrets.BOT_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           git config user.name 'liss-bot'
           git config user.email 'alicia-gh-bot@mail.as93.net'
-          
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+
           # Switch to badges branch
           git fetch origin badges:badges 2>/dev/null || git checkout --orphan badges
           git checkout badges 2>/dev/null || true

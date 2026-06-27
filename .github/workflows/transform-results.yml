@@ -1,7 +1,7 @@
 name: 🔄 Transform Results
 
 on:
-  workflow_run:
+  workflow_run: # zizmor: ignore[dangerous-triggers] internal pipeline step, only runs for main-branch runs of our own trusted Benchmark workflow
     workflows: ["📈 Benchmark"]
     types: [completed]
     branches: [main]
@@ -22,13 +22,14 @@ jobs:
     
     steps:
       - name: 📥 Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 1
+          persist-credentials: false
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -38,7 +39,7 @@ jobs:
           pip install -r scripts/requirements.txt
 
       - name: 📥 Download Benchmark Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
@@ -58,7 +59,7 @@ jobs:
           echo "✅ Found benchmark results"
 
       - name: 🗂️ Prepare Benchmark Results Directory
-        run: |
+        run: | # zizmor: ignore[github-env] COMMIT_TO_MAIN is a parsed true/false boolean from our own artifact, not arbitrary input
           # Create benchmark-results directory structure
           mkdir -p benchmark-results
           
@@ -147,13 +148,17 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 📝 Commit to Results Branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           set -e
           TIMESTAMP=$(date -u '+%Y%m%d_%H%M%S')
-          
+
           git config user.name "liss-bot"
           git config user.email "alicia-gh-bot@mail.as93.net"
-          
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+
           # Store current files in a temporary location
           mkdir -p /tmp/results-data
           if [ -d "benchmark-results" ]; then cp -r benchmark-results /tmp/results-data/ 2>/dev/null || true; fi
@@ -219,11 +224,15 @@ jobs:
             echo "ℹ️ No changes to commit to results branch"
           fi
 
-      - name: 📝 Commit to Main Branch  
+      - name: 📝 Commit to Main Branch
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
           git config user.name "liss-bot"
           git config user.email "alicia-gh-bot@mail.as93.net"
-          
+          git remote set-url origin "https://x-access-token:${TOKEN}@github.com/${REPO}.git"
+
           # Switch back to main branch
           git checkout main
           
