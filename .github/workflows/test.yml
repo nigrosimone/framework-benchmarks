@@ -49,7 +49,7 @@ jobs:
           cache-dependency-path: package-lock.json
           
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           cache: 'pip'
@@ -87,7 +87,7 @@ jobs:
             # Get framework list from Python config
             frameworks=$(python scripts/get_frameworks.py)
           fi
-          echo "frameworks=$(echo "[$frameworks]" | sed 's/,/", "/g' | sed 's/\[/[\"/ ; s/\]/\"]/')" >> $GITHUB_OUTPUT
+          echo "frameworks=$(echo "[$frameworks]" | sed 's/,/", "/g' | sed 's/\[/[\"/ ; s/\]/\"]/')" >> "$GITHUB_OUTPUT"
           echo "Testing frameworks: $frameworks"
 
   test:
@@ -112,7 +112,7 @@ jobs:
           cache: 'npm'
           
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           cache: 'pip'
@@ -140,7 +140,7 @@ jobs:
           fi
           
       - name: Add node_modules/.bin to PATH
-        run: echo "${{ github.workspace }}/node_modules/.bin" >> $GITHUB_PATH
+        run: echo "${{ github.workspace }}/node_modules/.bin" >> "$GITHUB_PATH"
           
       - name: Install Playwright browsers (if cache miss)
         run: |
@@ -295,7 +295,7 @@ jobs:
           
           # Get frameworks and initialize counters
           frameworks="${{ needs.setup.outputs.frameworks }}"
-          frameworks_array=($(echo "$frameworks" | tr -d '[]"' | tr ',' '\n' | xargs))
+          read -ra frameworks_array <<< "$(echo "$frameworks" | tr -d '[]"' | tr ',' ' ')"
           passed_count=0
           failed_count=0
           total_count=${#frameworks_array[@]}
@@ -355,9 +355,11 @@ jobs:
           
           # Set environment variables
           success_rate=$(( passed_count * 100 / total_count ))
-          echo "FAILED_COUNT=$failed_count" >> $GITHUB_ENV
-          echo "PASSED_COUNT=$passed_count" >> $GITHUB_ENV
-          echo "SUCCESS_RATE=$success_rate" >> $GITHUB_ENV
+          {
+            echo "FAILED_COUNT=$failed_count"
+            echo "PASSED_COUNT=$passed_count"
+            echo "SUCCESS_RATE=$success_rate"
+          } >> "$GITHUB_ENV"
           
           cd ..
           
@@ -387,20 +389,20 @@ jobs:
           
           # Calculate total frameworks from the array
           frameworks="${{ needs.setup.outputs.frameworks }}"
-          frameworks_array=($(echo "$frameworks" | tr -d '[]"' | tr ',' '\n' | xargs))
+          read -ra frameworks_array <<< "$(echo "$frameworks" | tr -d '[]"' | tr ',' ' ')"
           total_count=${#frameworks_array[@]}
           
           # Determine badge color (with null checks)
           if [[ -z "$FAILED_COUNT" || -z "$SUCCESS_RATE" ]]; then
             badge_color="lightgrey"
             badge_message="unknown"
-          elif [ $FAILED_COUNT -eq 0 ]; then
+          elif [ "$FAILED_COUNT" -eq 0 ]; then
             badge_color="brightgreen" 
             badge_message="${PASSED_COUNT}/${total_count} passed"
-          elif [ $SUCCESS_RATE -ge 80 ]; then
+          elif [ "$SUCCESS_RATE" -ge 80 ]; then
             badge_color="green"
             badge_message="${PASSED_COUNT}/${total_count} passed"
-          elif [ $SUCCESS_RATE -ge 50 ]; then
+          elif [ "$SUCCESS_RATE" -ge 50 ]; then
             badge_color="yellow"
             badge_message="${PASSED_COUNT}/${total_count} passed"
           else
@@ -461,7 +463,7 @@ jobs:
           # Copy badges and commit
           cp badges/*.svg . 2>/dev/null || echo "⚠️ No badge files found"
           
-          if git add *.svg && git diff --staged --quiet; then
+          if git add ./*.svg && git diff --staged --quiet; then
             echo "ℹ️ No badge changes to commit"
           else
             git commit -m "Update test badges"

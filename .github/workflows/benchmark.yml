@@ -54,7 +54,7 @@ jobs:
           cache: 'npm'
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
@@ -163,17 +163,17 @@ jobs:
 
       - name: 🔧 Prepare Benchmark Environment
         run: |
-          echo "PYTHONPATH=$PWD:$PWD/scripts" >> $GITHUB_ENV
+          echo "PYTHONPATH=$PWD:$PWD/scripts" >> "$GITHUB_ENV"
           
           # Set commit behavior based on event type or manual input
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "COMMIT_TO_MAIN=false" >> $GITHUB_ENV
+            echo "COMMIT_TO_MAIN=false" >> "$GITHUB_ENV"
             echo "⏰ Scheduled run - will skip main branch commit"
-            echo "SCHEDULED_RUN=true" >> $GITHUB_ENV
+            echo "SCHEDULED_RUN=true" >> "$GITHUB_ENV"
           else
-            echo "COMMIT_TO_MAIN=${{ github.event.inputs.commit_to_main || 'false' }}" >> $GITHUB_ENV
+            echo "COMMIT_TO_MAIN=${{ github.event.inputs.commit_to_main || 'false' }}" >> "$GITHUB_ENV"
             echo "👤 Manual run - commit to main: ${{ github.event.inputs.commit_to_main || 'false' }}"
-            echo "SCHEDULED_RUN=false" >> $GITHUB_ENV
+            echo "SCHEDULED_RUN=false" >> "$GITHUB_ENV"
           fi
           
           echo "📊 Benchmark Configuration:"
@@ -260,27 +260,33 @@ jobs:
       - name: 📊 Generate Benchmark Summary
         if: always()
         run: |
-          echo "## 📊 Benchmark Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Run Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## 📊 Benchmark Results Summary"
+            echo ""
+            echo "- **Run Date**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          } >> "$GITHUB_STEP_SUMMARY"
           
           # Check if benchmarks ran successfully
           if [ -d "benchmark-results" ] && [ "$(find benchmark-results -name "*.json" -type f | wc -l)" -gt 0 ]; then
             result_count=$(find benchmark-results -name "*.json" -type f | wc -l)
             latest_dir=$(find benchmark-results -mindepth 1 -maxdepth 1 -type d | sort -r | head -1)
             
-            echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
-            echo "- **Results Generated**: $result_count files" >> $GITHUB_STEP_SUMMARY
-            echo "- **Artifacts**: Available for download below" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "- **Status**: ✅ Success"
+              echo "- **Results Generated**: $result_count files"
+              echo "- **Artifacts**: Available for download below"
+            } >> "$GITHUB_STEP_SUMMARY"
             
             if [ -n "$latest_dir" ]; then
-              echo "- **Latest Results**: $(basename "$latest_dir")" >> $GITHUB_STEP_SUMMARY
+              echo "- **Latest Results**: $(basename "$latest_dir")" >> "$GITHUB_STEP_SUMMARY"
             fi
           else
-            echo "- **Status**: ❌ Failed" >> $GITHUB_STEP_SUMMARY
-            echo "- **Reason**: Benchmarks did not complete successfully" >> $GITHUB_STEP_SUMMARY
-            echo "- **Check**: Review the workflow logs for error details" >> $GITHUB_STEP_SUMMARY
-            echo "- **Artifacts**: Debug logs may be available below (if any)" >> $GITHUB_STEP_SUMMARY
+            {
+              echo "- **Status**: ❌ Failed"
+              echo "- **Reason**: Benchmarks did not complete successfully"
+              echo "- **Check**: Review the workflow logs for error details"
+              echo "- **Artifacts**: Debug logs may be available below (if any)"
+            } >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: 📋 Save Workflow Context

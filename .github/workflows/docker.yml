@@ -66,7 +66,7 @@ jobs:
       - name: 📊 Generate Summary
         if: success() && github.event_name != 'pull_request'
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
           ## 🐳 Docker Build Results
           
           ✅ **Published**: ${{ steps.meta.outputs.tags }}

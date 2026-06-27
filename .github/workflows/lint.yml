@@ -50,7 +50,7 @@ jobs:
           cache: 'npm'
           
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.9'
           cache: 'pip'
@@ -71,7 +71,7 @@ jobs:
             # Get framework list from Python config
             frameworks=$(python scripts/get_frameworks.py)
           fi
-          echo "frameworks=$(echo "[$frameworks]" | sed 's/,/", "/g' | sed 's/\[/[\"/ ; s/\]/\"]/')" >> $GITHUB_OUTPUT
+          echo "frameworks=$(echo "[$frameworks]" | sed 's/,/", "/g' | sed 's/\[/[\"/ ; s/\]/\"]/')" >> "$GITHUB_OUTPUT"
           echo "Linting frameworks: $frameworks"
 
   lint:
@@ -252,7 +252,7 @@ jobs:
               echo "|-----------|--------|--------|"
               echo -e "$table_rows"
             fi
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
           
       - name: Check overall status
         run: |
@@ -296,7 +296,7 @@ jobs:
           # Copy badges and commit
           cp badges/*.svg . 2>/dev/null || echo "⚠️ No badge files found"
           
-          if git add *.svg && git diff --staged --quiet; then
+          if git add ./*.svg && git diff --staged --quiet; then
             echo "ℹ️ No badge changes to commit"
           else
             git commit -m "Update lint badges"
