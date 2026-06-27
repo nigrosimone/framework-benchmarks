@@ -266,7 +266,7 @@ jobs:
   badges:
     name: Update Lint Badges
     needs: [setup, lint]
-    if: always()
+    if: ${{ always() && github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
