@@ -1,5 +1,5 @@
 # Build stage - Install dependencies and build project
-FROM node:20-bullseye-slim AS builder
+FROM node:22-bullseye-slim AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
@@ -30,7 +30,7 @@ COPY . .
 RUN npm run setup && npm run build
 
 # Production stage - Final runtime image
-FROM node:20-bullseye-slim AS production
+FROM node:22-bullseye-slim AS production
 
 # Install runtime dependencies including Chrome
 RUN apt-get update && apt-get install -y \
