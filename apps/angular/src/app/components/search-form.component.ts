@@ -1,12 +1,10 @@
 import { Component, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-search-form',
-  imports: [FormsModule],
   template: `
     <section class="search-section">
-      <form class="search-form" data-testid="search-form" (ngSubmit)="onSubmit()">
+      <form class="search-form" data-testid="search-form" (submit)="onSubmit($event)">
         <div class="search-form__group">
           <label for="location-input" class="sr-only">Enter city name</label>
           <input
@@ -17,9 +15,8 @@ import { FormsModule } from '@angular/forms';
             placeholder="Enter city name..."
             data-testid="search-input"
             autocomplete="off"
-            [ngModel]="city()"
-            (ngModelChange)="city.set($event)"
-            name="city"
+            [value]="city()"
+            (input)="city.set(locationInput.value)"
           />
           <button
             type="submit"
@@ -42,7 +39,8 @@ export class SearchFormComponent {
   readonly search = output<string>();
   readonly city = signal(this.getSavedLocation() ?? 'London');
 
-  onSubmit(): void {
+  onSubmit(event: SubmitEvent): void {
+    event.preventDefault();
     const city = this.city().trim();
 
     if (!city) {
