@@ -2,18 +2,14 @@ import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, map, switchMap, delay } from 'rxjs/operators';
-import { WeatherData, GeocodingResult } from '../types/weather.types';
+import type { WeatherData, GeocodingResult } from '../types/weather.types';
 
 @Service()
 export class WeatherService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = 'https://api.open-meteo.com/v1';
   private readonly geocodingUrl = 'https://geocoding-api.open-meteo.com/v1';
-  private readonly useMockData: boolean;
-
-  constructor() {
-    this.useMockData = this.shouldUseMockData();
-  }
+  private readonly useMockData = this.shouldUseMockData();
 
   private shouldUseMockData(): boolean {
     // Check if we're in a testing environment (Playwright sets specific user agents)

@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { WeatherData } from '../types/weather.types';
+import type { WeatherData } from '../types/weather.types';
 import { CurrentWeatherComponent } from './current-weather.component';
 import { ForecastComponent } from './forecast.component';
 

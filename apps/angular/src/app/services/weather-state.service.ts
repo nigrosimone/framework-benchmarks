@@ -2,7 +2,7 @@ import { Service, signal, inject } from '@angular/core';
 import { EMPTY, of } from 'rxjs';
 import { catchError, finalize, delay, switchMap } from 'rxjs/operators';
 import { WeatherService } from './weather.service';
-import { AppState } from '../types/weather.types';
+import type { AppState } from '../types/weather.types';
 
 @Service()
 export class WeatherStateService {

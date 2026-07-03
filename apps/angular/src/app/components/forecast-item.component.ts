@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { DailyWeather } from '../types/weather.types';
+import type { DailyWeather } from '../types/weather.types';
 import { WeatherUtils } from '../utils/weather.utils';
 
 @Component({

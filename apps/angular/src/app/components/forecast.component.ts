@@ -1,5 +1,5 @@
 import { Component, ElementRef, Injector, afterNextRender, inject, input, signal } from '@angular/core';
-import { WeatherData } from '../types/weather.types';
+import type { WeatherData } from '../types/weather.types';
 import { ForecastItemComponent } from './forecast-item.component';
 
 @Component({
