@@ -1,12 +1,10 @@
-import { ChangeDetectionStrategy, Component, ElementRef, afterNextRender, inject, input, signal } from '@angular/core';
-import { WeatherData } from '../types/weather.types';
+import { Component, ElementRef, Injector, afterNextRender, inject, input, signal } from '@angular/core';
+import type { WeatherData } from '../types/weather.types';
 import { ForecastItemComponent } from './forecast-item.component';
 
 @Component({
   selector: 'app-forecast',
-  standalone: true,
   imports: [ForecastItemComponent],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (weatherData(); as weatherData) {
       <section class="forecast-section">
@@ -29,6 +27,7 @@ import { ForecastItemComponent } from './forecast-item.component';
 })
 export class ForecastComponent {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly injector = inject(Injector);
 
   readonly weatherData = input<WeatherData | null>(null);
   readonly activeForecastIndex = signal<number | null>(null);
@@ -43,7 +42,7 @@ export class ForecastComponent {
         if (activeElement) {
           activeElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-      });
+      }, { injector: this.injector });
     }
   }
 }

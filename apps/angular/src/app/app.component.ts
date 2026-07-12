@@ -1,7 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-
+import { Component, inject } from '@angular/core';
 import { WeatherStateService } from './services/weather-state.service';
-
 import { SearchFormComponent } from './components/search-form.component';
 import { LoadingStateComponent } from './components/loading-state.component';
 import { ErrorStateComponent } from './components/error-state.component';
@@ -9,14 +7,12 @@ import { WeatherContentComponent } from './components/weather-content.component'
 
 @Component({
   selector: 'app-root',
-  standalone: true,
   imports: [
     SearchFormComponent,
     LoadingStateComponent,
     ErrorStateComponent,
     WeatherContentComponent
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <header class="header">
       <div class="container">
@@ -26,11 +22,11 @@ import { WeatherContentComponent } from './components/weather-content.component'
 
     <main class="main">
       <div class="container">
-        @let currentState = state();
+        @let currentState = weatherStateService.state();
 
         <app-search-form
           [isLoading]="currentState.isLoading"
-          (search)="onSearch($event)"
+          (search)="weatherStateService.loadWeather($event)"
         ></app-search-form>
 
         <div class="weather-container" data-testid="weather-container">
@@ -41,10 +37,12 @@ import { WeatherContentComponent } from './components/weather-content.component'
             [message]="currentState.error"
           ></app-error-state>
 
-          <app-weather-content
-            [isVisible]="!!currentState.weatherData && !currentState.isLoading && !currentState.error"
-            [weatherData]="currentState.weatherData"
-          ></app-weather-content>
+          @defer (on immediate) {
+            <app-weather-content
+              [isVisible]="!!currentState.weatherData && !currentState.isLoading && !currentState.error"
+              [weatherData]="currentState.weatherData"
+            ></app-weather-content>
+          }
         </div>
       </div>
     </main>
@@ -62,11 +60,5 @@ import { WeatherContentComponent } from './components/weather-content.component'
   `
 })
 export class AppComponent {
-  private readonly weatherStateService = inject(WeatherStateService);
-
-  protected readonly state = this.weatherStateService.state;
-
-  onSearch(city: string): void {
-    this.weatherStateService.loadWeather(city);
-  }
+  protected readonly weatherStateService = inject(WeatherStateService);
 }
